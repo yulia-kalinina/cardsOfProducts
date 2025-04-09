@@ -172,6 +172,7 @@ export default function AddCatForm() {
         url: mockImageUrl,
         width: 500,
         height: 500,
+        isFavorite: false,
         breeds: [
           {
             id: Math.random().toString(36).substring(2, 9),
