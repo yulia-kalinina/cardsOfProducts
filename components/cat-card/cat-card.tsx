@@ -32,15 +32,10 @@ export function CatCard({ cat }: CatCardProps) {
     }
   };
 
-  const handleCardClick = (): void => {
-    sessionStorage.setItem(`cat_${cat.id}`, JSON.stringify(cat));
-  };
-
   return (
     <Link
       href={`/products/${cat.id}`}
       className="block cursor-pointer hover:shadow-lg transition-shadow"
-      onClick={handleCardClick}
     >
       <div className="bg-white h-[600px] rounded-lg shadow-md overflow-hidden grid grid-rows-[auto_1fr_auto]">
         <div className="relative h-64 w-full overflow-hiddenn">

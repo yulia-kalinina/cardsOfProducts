@@ -2,36 +2,58 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Cat } from "@/lib/redux/catsSlice";
-import { useAppSelector } from "@/lib/redux/hooks";
+import { Cat, fetchCatById } from "@/lib/redux/catsSlice";
 import Image from "next/image";
 import Link from "next/link";
 import { UiButton } from "@/components/uikit/ui-button";
+import { useAppDispatch } from "@/lib/redux/hooks";
 
 export default function ProductPage() {
+  const dispatch = useAppDispatch();
   const [cat, setCat] = useState<Cat | null>(null);
-  const params = useParams();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const allCats = useAppSelector((state) => state.cats.cats);
-  const findCatInStore = allCats.find((item) => item.id === params.slug);
+  const { slug } = useParams() as { slug: string };
 
   useEffect(() => {
-    if (params.slug) {
-      const savedCat = sessionStorage.getItem(`cat_${params.slug}`);
-      if (savedCat) {
-        setCat(JSON.parse(savedCat) as Cat);
-        sessionStorage.removeItem(`cat_${params.slug}`);
-      } else {
-        if (findCatInStore) {
-          setCat(findCatInStore);
-        }
-      }
-    }
-  }, [params.slug, findCatInStore]);
+    const loadCat = async () => {
+      try {
+        setLoading(true);
 
-  if (!cat) {
+        const catsInStorage = localStorage.getItem("catsState");
+        if (catsInStorage) {
+          const parsedState = JSON.parse(catsInStorage);
+          if (parsedState.cats) {
+            const foundCat = parsedState.cats.find(
+              (item: Cat) => item.id === slug
+            );
+            if (foundCat) {
+              return setCat(foundCat);
+            }
+          }
+        }
+
+        const response = await dispatch(fetchCatById(slug)).unwrap();
+        if (response) {
+          setCat(response);
+          return;
+        } 
+
+      } catch (err) {
+        setError("Failed to load cat");
+        console.log("Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCat();
+  }, [slug, dispatch]);
+
+  if (loading) return <div className="px-30 pt-12 text-base">Loading...</div>;
+  if (error) return <div className="px-30 pt-12 text-base">{error}</div>;
+  if (!cat)
     return <div className="px-30 pt-12 text-base">No information found</div>;
-  }
 
   return (
     <div className="max-w-[1200px] mx-auto px-[15px] mt-12 text-base">

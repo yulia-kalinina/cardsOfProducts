@@ -111,15 +111,23 @@ export const fetchCats = createAsyncThunk<
   }
 });
 
-export const fetchCatById = createAsyncThunk(
-  "cats/fetchById",
-  async (id: string) => {
-    const response = await axios.get<Cat[]>(
+export const fetchCatById = createAsyncThunk<
+  Cat,
+  string,
+  { rejectValue: string }
+>("cats/fetchById", async (id, { rejectWithValue }) => {
+  try {
+    const response = await axios.get<Cat>(
       `https://api.thecatapi.com/v1/images/${id}`
     );
     return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      return rejectWithValue(error.message);
+    }
+    return rejectWithValue("Unknown error");
   }
-);
+});
 
 export const catsSlice = createSlice({
   name: "cats",
