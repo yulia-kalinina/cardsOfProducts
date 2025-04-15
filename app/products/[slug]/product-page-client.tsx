@@ -8,11 +8,13 @@ import Link from "next/link";
 import { UiButton } from "@/components/uikit/ui-button";
 import { useAppDispatch } from "@/lib/redux/hooks";
 
-export default function ProductPageClient({
-  params,
-}: {
-  params: { slug: string };
-}) {
+interface ProductPageClientProps {
+  params: {
+    slug: string;
+  };
+}
+
+export default function ProductPageClient({ params }: ProductPageClientProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
 

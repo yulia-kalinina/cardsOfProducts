@@ -1,5 +1,6 @@
 import { Cat } from "@/lib/redux/catsSlice";
 import ProductPageClient from "./product-page-client";
+import { Metadata } from "next";
 
 export async function generateStaticParams() {
   const response = await fetch(
@@ -8,6 +9,7 @@ export async function generateStaticParams() {
       headers: {
         "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY || "",
       },
+      next: { revalidate: 3600 },
     }
   );
 
@@ -16,6 +18,15 @@ export async function generateStaticParams() {
   return cats.map((cat) => ({
     slug: cat.id,
   }));
+}
+
+export async function generateMetadata(
+  { params }: { params: { slug: string } }
+): Promise<Metadata> {
+  return {
+    title: `Cat ${params.slug}`,
+    description: `Information about cat ${params.slug}`,
+  };
 }
 
 export default function Page({ params }: { params: { slug: string } }) {
