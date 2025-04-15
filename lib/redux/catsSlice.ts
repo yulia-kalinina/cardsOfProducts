@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
+import { notFound } from "next/navigation";
 
 export interface CatBreed {
   id: string;
@@ -80,14 +81,8 @@ export const fetchCats = createAsyncThunk<
 >("cats/fetchCats", async (params, { rejectWithValue }) => {
   try {
     const response = await axios.get<Cat[]>(
-      "https://api.thecatapi.com/v1/images/search",
+      "https://api.thecatapi.com/v1/images/search?limit=20&has_breeds=1",
       {
-        params: {
-          limit: 20,
-          has_breeds: 1,
-          api_key: process.env.NEXT_PUBLIC_CAT_API_KEY,
-          ...params,
-        },
         headers: {
           "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY,
         },
@@ -120,6 +115,9 @@ export const fetchCatById = createAsyncThunk<
     const response = await axios.get<Cat>(
       `https://api.thecatapi.com/v1/images/${id}`
     );
+    if (response.status === 404) {
+      return notFound();
+    }
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
