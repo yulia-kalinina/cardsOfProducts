@@ -9,20 +9,17 @@ import { UiButton } from "@/components/uikit/ui-button";
 import { useAppDispatch } from "@/lib/redux/hooks";
 
 interface ProductPageClientProps {
-  params: {
     slug: string;
   };
-}
 
-export default function ProductPageClient({ params }: ProductPageClientProps) {
+
+export default function ProductPageClient({ slug }: ProductPageClientProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
   const [cat, setCat] = useState<Cat | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const slug = params.slug;
 
   useEffect(() => {
     if (!slug) {

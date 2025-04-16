@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
-    "types": [
-      "next"
-    ],
+    "types": ["next", "node"],
     "target": "ES2017",
     "lib": [
       "dom",

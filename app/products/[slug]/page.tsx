@@ -2,6 +2,8 @@ import { Cat } from "@/lib/redux/catsSlice";
 import ProductPageClient from "./product-page-client";
 import { Metadata } from "next";
 
+type Props = Promise<{ slug: string }>;
+
 export async function generateStaticParams() {
   const response = await fetch(
     "https://api.thecatapi.com/v1/images/search?limit=20&has_breeds=1",
@@ -20,15 +22,17 @@ export async function generateStaticParams() {
   }));
 }
 
-export async function generateMetadata(
-  { params }: { params: { slug: string } }
-): Promise<Metadata> {
+export async function generateMetadata(props: {
+  params: Props;
+}): Promise<Metadata> {
+  const { slug } = await props.params;
   return {
-    title: `Cat ${params.slug}`,
-    description: `Information about cat ${params.slug}`,
+    title: `Cat ${slug}`,
+    description: `Information about cat ${slug}`,
   };
 }
 
-export default function Page({ params }: { params: { slug: string } }) {
-  return <ProductPageClient params={params} />;
+export default async function Page(props: { params: Props }) {
+  const { slug } = await props.params;
+  return <ProductPageClient slug={slug} />;
 }
