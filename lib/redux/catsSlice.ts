@@ -39,12 +39,29 @@ export interface FetchCatsParams {
 }
 
 const loadState = (): CatsState | undefined => {
-  console.log("Checking localStorage...");
-  return undefined;
+  if (typeof window === "undefined") {
+    console.log("Server-side: localStorage unavailable");
+    return undefined;
+  }
 
-  /*if (typeof window === "undefined") return undefined;
+  const rawData = localStorage.getItem("catsState");
+  console.log("LocalStorage Raw Data:", rawData);
+
+  if (!rawData) {
+    console.log("No data in localStorage");
+    return undefined;
+  }
 
   try {
+    const parsed = JSON.parse(rawData);
+    console.log("Parsed localStorage:", parsed);
+    return parsed;
+  } catch (error) {
+    console.error("LocalStorage parse error:", error);
+    return undefined;
+  }
+
+  /*try {
     const serializedState = localStorage.getItem("catsState");
     console.log("LocalStorage data:", serializedState);
     if (!serializedState) return undefined;
@@ -104,15 +121,20 @@ export const fetchCats = createAsyncThunk<
 >("cats/fetchCats", async (params, { rejectWithValue }) => {
   try {
     const response = await axios.get<Cat[]>(
-      "https://api.thecatapi.com/v1/images/search?limit=20&has_breeds=1",
+      "https://api.thecatapi.com/v1/images/search?limit=20&has_breeds=1&size=full",
       {
         headers: {
           "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY,
+        },
+        params: {
+          limit: 20,
+          has_breeds: 1,
         },
       }
     );
 
     console.log("RAW API RESPONSE:", response.data);
+    console.log("API Response Count:", response.data.length);
 
     const catsWithBreeds = response.data.map((cat) => ({
       ...cat,
@@ -120,7 +142,7 @@ export const fetchCats = createAsyncThunk<
         ? cat.breeds
         : [
             {
-              id: "unknown",
+              id: "unknown_" + cat.id,
               name: "Unknown Breed",
               weight: { imperial: "N/A", metric: "N/A" },
               life_span: "Unknown",
@@ -132,6 +154,7 @@ export const fetchCats = createAsyncThunk<
     }));
 
     console.log("RAW API RESPONSE catsWithBreeds:", catsWithBreeds);
+    console.log("Processed Cats:", catsWithBreeds.length);
 
     return catsWithBreeds;
   } catch (error) {
@@ -258,7 +281,7 @@ export const catsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchCats.fulfilled, (state, action: PayloadAction<Cat[]>) => {
-        console.log("Fetched cats:", action.payload);
+        console.log("Saving to Redux. Payload:", action.payload.length, "items");
         state.status = "succeeded";
         state.cats = action.payload.map((cat) => ({
           ...cat,
@@ -266,14 +289,14 @@ export const catsSlice = createSlice({
             state.cats.find((c) => c.id === cat.id)?.isFavorite || false,
         }));
 
-        localStorage.setItem(
-          "catsState",
-          JSON.stringify({
-            cats: state.cats,
-            status: "succeeded",
-            showFavorites: state.showFavorites,
-          })
-        );
+        const saveData = {
+          cats: action.payload,
+          status: "succeeded",
+          showFavorites: state.showFavorites
+        };
+        console.log("Saving to localStorage:", saveData);
+
+        localStorage.setItem("catsState", JSON.stringify(saveData));
       })
       .addCase(fetchCats.rejected, (state, action) => {
         console.error("Fetch failed:", action.payload);

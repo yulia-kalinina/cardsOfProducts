@@ -24,7 +24,10 @@ export default function Products() {
   } = useAppSelector((state) => state.cats);
 
   useEffect(() => {
-    console.log("Current Redux state:", { allCats, status });
+    console.log("UI Component - Cats:", {
+      count: allCats.length,
+      sample: allCats.slice(0, 3) // Первые 3 кота для примера
+    });
     setIsClient(true);
     if (status === "idle") {
       console.log("Dispatching fetch...");
