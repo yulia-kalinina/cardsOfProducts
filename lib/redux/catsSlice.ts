@@ -40,7 +40,7 @@ export interface FetchCatsParams {
 
 const loadState = (): CatsState | undefined => {
   console.log("Checking localStorage...");
-  return undefined; 
+  return undefined;
 
   /*if (typeof window === "undefined") return undefined;
 
@@ -72,21 +72,23 @@ const loadState = (): CatsState | undefined => {
 const initialState: CatsState = loadState() || {
   cats: [
     {
-      id: 'fallback-cat',
-      url: 'https://cdn2.thecatapi.com/images/abc.jpg',
-      breeds: [{ 
-        id: 'fallback-breed',
-        name: 'Test Breed',
-        weight: { imperial: '7-10', metric: '3-5' },
-        life_span: '12-15 years',
-        temperament: 'Playful',
-        description: 'Test cat',
-        origin: 'Test'
-      }],
+      id: "fallback-cat",
+      url: "https://cdn2.thecatapi.com/images/abc.jpg",
+      breeds: [
+        {
+          id: "fallback-breed",
+          name: "Test Breed",
+          weight: { imperial: "7-10", metric: "3-5" },
+          life_span: "12-15 years",
+          temperament: "Playful",
+          description: "Test cat",
+          origin: "Test",
+        },
+      ],
       width: 500,
       height: 500,
-      isFavorite: false
-    }
+      isFavorite: false,
+    },
   ],
   status: "idle",
   error: null,
@@ -102,17 +104,38 @@ export const fetchCats = createAsyncThunk<
 >("cats/fetchCats", async (params, { rejectWithValue }) => {
   try {
     const response = await axios.get<Cat[]>(
-      "https://api.thecatapi.com/v1/images/search?limit=20",
+      "https://api.thecatapi.com/v1/images/search?limit=20&has_breeds=1",
       {
         headers: {
           "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY,
         },
       }
     );
+
     console.log("RAW API RESPONSE:", response.data);
-    return response.data;
+
+    const catsWithBreeds = response.data.map((cat) => ({
+      ...cat,
+      breeds: cat.breeds?.length
+        ? cat.breeds
+        : [
+            {
+              id: "unknown",
+              name: "Unknown Breed",
+              weight: { imperial: "N/A", metric: "N/A" },
+              life_span: "Unknown",
+              temperament: "Not specified",
+              description: "No breed information available",
+              origin: "Unknown",
+            },
+          ],
+    }));
+
+    console.log("RAW API RESPONSE catsWithBreeds:", catsWithBreeds);
+
+    return catsWithBreeds;
   } catch (error) {
-    console.error("API error:", error); 
+    console.error("API error:", error);
     return rejectWithValue(
       axios.isAxiosError(error) ? error.message : "Unknown error"
     );

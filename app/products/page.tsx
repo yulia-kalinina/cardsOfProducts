@@ -57,8 +57,7 @@ export default function Products() {
     dispatch(goToPage(1));
   };
 
-  console.log(allCats);
-  console.log(allCats.length);
+  console.log("show all cats in /product:", allCats);
 
   return (
     <div className="max-w-[1200px] mx-auto px-[15px] mt-12 text-sm">

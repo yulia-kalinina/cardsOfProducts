@@ -14,6 +14,7 @@ interface CatCardProps {
 }
 
 export function CatCard({ cat }: CatCardProps) {
+  console.log("show current cat info in card component:", cat);
   const dispatch = useAppDispatch();
 
   const breed = cat.breeds?.[0];
