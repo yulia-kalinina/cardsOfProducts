@@ -43,6 +43,7 @@ const loadState = (): CatsState | undefined => {
 
   try {
     const serializedState = localStorage.getItem("catsState");
+    console.log("LocalStorage data:", serializedState);
     if (!serializedState) return undefined;
 
     const parsed = JSON.parse(serializedState);
@@ -66,7 +67,24 @@ const loadState = (): CatsState | undefined => {
 };
 
 const initialState: CatsState = loadState() || {
-  cats: [],
+  cats: [
+    {
+      id: 'fallback-cat',
+      url: 'https://cdn2.thecatapi.com/images/abc.jpg',
+      breeds: [{ 
+        id: 'fallback-breed',
+        name: 'Test Breed',
+        weight: { imperial: '7-10', metric: '3-5' },
+        life_span: '12-15 years',
+        temperament: 'Playful',
+        description: 'Test cat',
+        origin: 'Test'
+      }],
+      width: 500,
+      height: 500,
+      isFavorite: false
+    }
+  ],
   status: "idle",
   error: null,
   currentPage: 1,
@@ -88,9 +106,10 @@ export const fetchCats = createAsyncThunk<
         },
       }
     );
-
+    console.log("API response:", response.data);
     return response.data.filter((cat) => cat.breeds?.length);
   } catch (error) {
+    console.error("API error:", error); 
     return rejectWithValue(
       axios.isAxiosError(error) ? error.message : "Unknown error"
     );
@@ -212,6 +231,7 @@ export const catsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchCats.fulfilled, (state, action: PayloadAction<Cat[]>) => {
+        console.log("Data saved to Redux:", action.payload);
         state.status = "succeeded";
         state.cats = action.payload.map((cat) => ({
           ...cat,

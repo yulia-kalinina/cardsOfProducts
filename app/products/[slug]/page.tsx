@@ -15,13 +15,12 @@ export async function generateStaticParams() {
   );
 
   const cats: Cat[] = await response.json();
+  return cats.map(cat => ({ slug: cat.id }));
 
-  console.log(cats);
-
-  const catsWithBreeds = cats.filter((cat) => cat.breeds?.length);
-  return catsWithBreeds.length > 0
-    ? catsWithBreeds.map((cat) => ({ slug: cat.id }))
-    : [{ slug: "default-cat" }];
+  //const catsWithBreeds = cats.filter((cat) => cat.breeds?.length);
+  //return catsWithBreeds.length > 0
+  //  ? catsWithBreeds.map((cat) => ({ slug: cat.id }))
+  //  : [{ slug: "default-cat" }];
 }
 
 export async function generateMetadata(props: {

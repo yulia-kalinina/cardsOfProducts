@@ -56,6 +56,7 @@ export default function Products() {
   };
 
   console.log(allCats);
+  console.log(allCats.length);
 
   return (
     <div className="max-w-[1200px] mx-auto px-[15px] mt-12 text-sm">
