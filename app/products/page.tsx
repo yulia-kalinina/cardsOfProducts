@@ -24,11 +24,13 @@ export default function Products() {
   } = useAppSelector((state) => state.cats);
 
   useEffect(() => {
+    console.log("Current Redux state:", { allCats, status });
     setIsClient(true);
-    if (allCats.length === 0 && status === "idle") {
-      dispatch(fetchCats({ limit: 20, has_breeds: 1 }));
+    if (status === "idle") {
+      console.log("Dispatching fetch...");
+      dispatch(fetchCats({  }));
     }
-  }, [dispatch, status, allCats.length]);
+  }, [dispatch, status, allCats.length, allCats]);
 
   const filteredCats = showFavorites
     ? allCats.filter((cat) => cat.isFavorite)

@@ -39,7 +39,10 @@ export interface FetchCatsParams {
 }
 
 const loadState = (): CatsState | undefined => {
-  if (typeof window === "undefined") return undefined;
+  console.log("Checking localStorage...");
+  return undefined; 
+
+  /*if (typeof window === "undefined") return undefined;
 
   try {
     const serializedState = localStorage.getItem("catsState");
@@ -63,7 +66,7 @@ const loadState = (): CatsState | undefined => {
     };
   } catch {
     return undefined;
-  }
+  }*/
 };
 
 const initialState: CatsState = loadState() || {
@@ -99,15 +102,15 @@ export const fetchCats = createAsyncThunk<
 >("cats/fetchCats", async (params, { rejectWithValue }) => {
   try {
     const response = await axios.get<Cat[]>(
-      "https://api.thecatapi.com/v1/images/search?limit=20&has_breeds=1",
+      "https://api.thecatapi.com/v1/images/search?limit=20",
       {
         headers: {
           "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY,
         },
       }
     );
-    console.log("API response:", response.data);
-    return response.data.filter((cat) => cat.breeds?.length);
+    console.log("RAW API RESPONSE:", response.data);
+    return response.data;
   } catch (error) {
     console.error("API error:", error); 
     return rejectWithValue(
@@ -227,11 +230,12 @@ export const catsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchCats.pending, (state) => {
+        console.log("Fetching cats...");
         state.status = "loading";
         state.error = null;
       })
       .addCase(fetchCats.fulfilled, (state, action: PayloadAction<Cat[]>) => {
-        console.log("Data saved to Redux:", action.payload);
+        console.log("Fetched cats:", action.payload);
         state.status = "succeeded";
         state.cats = action.payload.map((cat) => ({
           ...cat,
@@ -249,6 +253,7 @@ export const catsSlice = createSlice({
         );
       })
       .addCase(fetchCats.rejected, (state, action) => {
+        console.error("Fetch failed:", action.payload);
         state.status = "failed";
         state.error = action.payload || "Failed to fecth breeds";
       });
