@@ -89,20 +89,11 @@ export const fetchCats = createAsyncThunk<
       }
     );
 
-    const catsWithBreeds = response.data.filter(
-      (cat) => cat.breeds && cat.breeds.length > 0
-    );
-
-    if (catsWithBreeds.length === 0) {
-      return rejectWithValue("Api returned cats but no breed info");
-    }
-
-    return catsWithBreeds;
+    return response.data.filter((cat) => cat.breeds?.length);
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      return rejectWithValue(error.message);
-    }
-    return rejectWithValue("Unknown error");
+    return rejectWithValue(
+      axios.isAxiosError(error) ? error.message : "Unknown error"
+    );
   }
 });
 

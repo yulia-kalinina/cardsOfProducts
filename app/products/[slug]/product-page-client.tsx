@@ -79,6 +79,8 @@ export default function ProductPageClient({ slug }: ProductPageClientProps) {
     );
   }
 
+  if (!cat?.breeds) return <div className="max-w-[1200px] mx-auto px-[15px] pt-12 text-base">There is no info about breeds</div>;
+
   const breed = cat.breeds?.[0];
 
   return (
