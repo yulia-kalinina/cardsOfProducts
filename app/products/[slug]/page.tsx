@@ -11,13 +11,16 @@ export async function generateStaticParams() {
       headers: {
         "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY || "",
       },
-      next: { revalidate: 3600 },
     }
   );
 
   const cats: Cat[] = await response.json();
 
-  return cats.map((cat) => ({
+  const catsWithBreeds = cats.filter(
+    (cat) => cat.breeds && cat.breeds.length > 0
+  );
+
+  return catsWithBreeds.map((cat) => ({
     slug: cat.id,
   }));
 }

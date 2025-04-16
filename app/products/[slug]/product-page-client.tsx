@@ -12,7 +12,6 @@ interface ProductPageClientProps {
     slug: string;
   };
 
-
 export default function ProductPageClient({ slug }: ProductPageClientProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -93,9 +92,9 @@ export default function ProductPageClient({ slug }: ProductPageClientProps) {
             src={cat.url}
             alt={breed?.name || "Cat"}
             fill
-            className="object-cover object-left-top"
-            sizes="(max-width: 768px) 100vw, 33vw"
-            priority
+            className="object-cover object-left-top basis-1/3"
+            unoptimized={true}
+            priority={true}
           />
         </div>
         <div className="flex-1">
