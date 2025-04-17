@@ -122,35 +122,28 @@ export const fetchCats = createAsyncThunk<
         params: {
           limit: 20,
           has_breeds: 1,
+          breed_id: 'all',
           size: "small",
+          order: 'RANDOM'
         },
       }
     );
 
-    console.log("RAW API RESPONSE:", response.data);
-    console.log("API Response Count:", response.data.length);
+    const validCats = response.data.filter(cat => {
+      const hasValidBreeds = cat.breeds?.length && 
+                            cat.breeds[0].name && 
+                            cat.breeds[0].id;
+      return hasValidBreeds;
+    });
 
-    const catsWithBreeds = response.data.map((cat) => ({
-      ...cat,
-      breeds: cat.breeds?.length
-        ? cat.breeds
-        : [
-            {
-              id: "unknown_" + cat.id,
-              name: "Unknown Breed",
-              weight: { imperial: "N/A", metric: "N/A" },
-              life_span: "Unknown",
-              temperament: "Not specified",
-              description: "No breed information available",
-              origin: "Unknown",
-            },
-          ],
-    }));
+    if (validCats.length === 0) {
+      console.warn("API returned no cats with valid breed info");
+      return [];
+    }
 
-    console.log("RAW API RESPONSE catsWithBreeds:", catsWithBreeds);
-    console.log("Processed Cats:", catsWithBreeds.length);
+    console.log("Valid cats with breeds:", validCats.length);
+    return validCats.slice(0, 20);
 
-    return catsWithBreeds;
   } catch (error) {
     console.error("API error:", error);
     return rejectWithValue(
