@@ -62,7 +62,7 @@ export default function Products() {
 
   console.log("show all cats in /product:", allCats);
   console.log("show filteredCats in /product:", filteredCats);
-  console.log("show filteredCats in /product:", currentCats);
+  console.log("show currentCats in /product:", currentCats);
 
   return (
     <div className="max-w-[1200px] mx-auto px-[15px] mt-12 text-sm">

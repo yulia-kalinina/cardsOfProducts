@@ -53,20 +53,12 @@ const loadState = (): CatsState | undefined => {
   }
 
   try {
-    const parsed = JSON.parse(rawData);
-    console.log("Parsed localStorage:", parsed);
-    return parsed;
-  } catch (error) {
-    console.error("LocalStorage parse error:", error);
-    return undefined;
-  }
-
-  /*try {
     const serializedState = localStorage.getItem("catsState");
     console.log("LocalStorage data:", serializedState);
     if (!serializedState) return undefined;
 
     const parsed = JSON.parse(serializedState);
+    console.log("Parsed localStorage:", parsed);
 
     return {
       cats: Array.isArray(parsed.cats)
@@ -81,9 +73,10 @@ const loadState = (): CatsState | undefined => {
       itemsPerPage: 3,
       showFavorites: parsed.showFavorites || false,
     };
-  } catch {
+  } catch (error) {
+    console.error("LocalStorage parse error:", error);
     return undefined;
-  }*/
+  }
 };
 
 const initialState: CatsState = loadState() || {
