@@ -44,30 +44,23 @@ const loadState = (): CatsState | undefined => {
     return undefined;
   }
 
-  const rawData = localStorage.getItem("catsState");
-  console.log("LocalStorage Raw Data:", rawData);
-
-  if (!rawData) {
-    console.log("No data in localStorage");
-    return undefined;
-  }
-
   try {
-    const serializedState = localStorage.getItem("catsState");
-    console.log("LocalStorage data:", serializedState);
-    if (!serializedState) return undefined;
+    const data = localStorage.getItem("catsState");
+    if (!data) return undefined;
 
-    const parsed = JSON.parse(serializedState);
-    console.log("Parsed localStorage:", parsed);
+    const parsed = JSON.parse(data);
+
+    if (Array.isArray(parsed.cats) && parsed.cats.length === 0) {
+      console.log("Ignoring empty cats array from localStorage");
+      return undefined;
+    }
 
     return {
-      cats: Array.isArray(parsed.cats)
-        ? parsed.cats.map((cat: Cat) => ({
-            ...cat,
-            isFavorite: cat.isFavorite || false,
-          }))
-        : [],
-      status: "succeeded",
+      cats: parsed.cats.map((cat: Cat) => ({
+        ...cat,
+        isFavorite: cat.isFavorite || false,
+      })) || [],
+      status: parsed.status || "idle", // Сбрасываем статус
       error: null,
       currentPage: 1,
       itemsPerPage: 3,
@@ -80,26 +73,7 @@ const loadState = (): CatsState | undefined => {
 };
 
 const initialState: CatsState = loadState() || {
-  cats: [
-    {
-      id: "fallback-cat",
-      url: "https://cdn2.thecatapi.com/images/abc.jpg",
-      breeds: [
-        {
-          id: "fallback-breed",
-          name: "Test Breed",
-          weight: { imperial: "7-10", metric: "3-5" },
-          life_span: "12-15 years",
-          temperament: "Playful",
-          description: "Test cat",
-          origin: "Test",
-        },
-      ],
-      width: 500,
-      height: 500,
-      isFavorite: false,
-    },
-  ],
+  cats: [],
   status: "idle",
   error: null,
   currentPage: 1,
@@ -122,17 +96,16 @@ export const fetchCats = createAsyncThunk<
         params: {
           limit: 20,
           has_breeds: 1,
-          breed_id: 'all',
+          breed_id: "all",
           size: "small",
-          order: 'RANDOM'
+          order: "RANDOM",
         },
       }
     );
 
-    const validCats = response.data.filter(cat => {
-      const hasValidBreeds = cat.breeds?.length && 
-                            cat.breeds[0].name && 
-                            cat.breeds[0].id;
+    const validCats = response.data.filter((cat) => {
+      const hasValidBreeds =
+        cat.breeds?.length && cat.breeds[0].name && cat.breeds[0].id;
       return hasValidBreeds;
     });
 
@@ -143,7 +116,6 @@ export const fetchCats = createAsyncThunk<
 
     console.log("Valid cats with breeds:", validCats.length);
     return validCats.slice(0, 20);
-
   } catch (error) {
     console.error("API error:", error);
     return rejectWithValue(

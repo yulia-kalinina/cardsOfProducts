@@ -3,7 +3,7 @@
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { fetchCats, nextPage, prevPage, goToPage } from "@/lib/redux/catsSlice";
 import { CatCard } from "@/components/cat-card";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { LeftArrowIcon } from "@/components/icons/left-arrow";
 import { RightArrowIcon } from "@/components/icons/right-arrow";
 import { UiButton } from "@/components/uikit/ui-button";
@@ -14,26 +14,30 @@ export default function Products() {
 
   const dispatch = useAppDispatch();
 
-  const {
-    cats: allCats,
-    status,
-    error,
-    currentPage,
-    showFavorites,
-    itemsPerPage,
-  } = useAppSelector((state) => state.cats);
+  const { error, currentPage, showFavorites, itemsPerPage } = useAppSelector(
+    (state) => state.cats
+  );
+
+  const { cats: allCats, status } = useAppSelector(
+    (state) => ({
+      cats: state.cats.cats,
+      status: state.cats.status,
+    }),
+    (prev, next) =>
+      prev.cats.length === next.cats.length && prev.status === next.status
+  );
+
+  const initialLoadRef = useRef(false);
 
   useEffect(() => {
-    console.log("UI Component - Cats:", {
-      count: allCats.length,
-      sample: allCats.slice(0, 3), // Первые 3 кота для примера
-    });
     setIsClient(true);
-    if (status === "idle") {
-      console.log("Dispatching fetch...");
+
+    if (!initialLoadRef.current && (status === 'idle' || allCats.length === 0)) {
+      console.log('Initial data loading...');
+      initialLoadRef.current = true;
       dispatch(fetchCats({ limit: 20, has_breeds: 1 }));
     }
-  }, [dispatch, status, allCats.length, allCats]);
+  }, [dispatch, status, allCats.length]);
 
   const filteredCats = showFavorites
     ? allCats.filter((cat) => cat.isFavorite)
