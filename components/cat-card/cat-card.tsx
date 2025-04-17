@@ -44,7 +44,7 @@ export function CatCard({ cat }: CatCardProps) {
             src={cat.url}
             alt={breed?.name || "Cat"}
             fill
-            className="object-cover object-left-top"
+            className="object-cover object-left-top bg-sky-200"
             unoptimized={true}
             priority={true}
           />

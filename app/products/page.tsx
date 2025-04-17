@@ -26,12 +26,12 @@ export default function Products() {
   useEffect(() => {
     console.log("UI Component - Cats:", {
       count: allCats.length,
-      sample: allCats.slice(0, 3) // Первые 3 кота для примера
+      sample: allCats.slice(0, 3), // Первые 3 кота для примера
     });
     setIsClient(true);
     if (status === "idle") {
       console.log("Dispatching fetch...");
-      dispatch(fetchCats({  }));
+      dispatch(fetchCats({ limit: 20, has_breeds: 1 }));
     }
   }, [dispatch, status, allCats.length, allCats]);
 
@@ -80,6 +80,18 @@ export default function Products() {
         {showFavorites ? "Your favorite cats" : "All cat breeds"}
       </h1>
 
+      <button
+        onClick={() => {
+          const withBreeds = allCats.filter((c) => c.breeds?.[0]);
+          const withoutBreeds = allCats.filter((c) => !c.breeds?.[0]);
+          console.log("Cats with breeds:", withBreeds);
+          console.log("Cats without breeds:", withoutBreeds);
+          console.log("First cat full data:", allCats[0]);
+        }}
+      >
+        Debug Cats Data
+      </button>
+
       {showFavorites && filteredCats.length === 0 ? (
         <div className="text-center py-8">
           There are not any favorite cats yet
@@ -87,9 +99,10 @@ export default function Products() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentCats.map((cat) => (
-              <CatCard key={cat.id} cat={cat} />
-            ))}
+            {currentCats.map((cat) => {
+              console.log("Rendering cat:", cat.id);
+              return <CatCard key={cat.id} cat={cat} />;
+            })}
           </div>
 
           <div className="mt-12 mb-10 flex gap-10 justify-center text-base">

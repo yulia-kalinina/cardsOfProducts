@@ -121,14 +121,15 @@ export const fetchCats = createAsyncThunk<
 >("cats/fetchCats", async (params, { rejectWithValue }) => {
   try {
     const response = await axios.get<Cat[]>(
-      "https://api.thecatapi.com/v1/images/search?limit=20&has_breeds=1&size=full",
+      "https://api.thecatapi.com/v1/images/search",
       {
         headers: {
-          "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY,
+          "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY || "",
         },
         params: {
           limit: 20,
           has_breeds: 1,
+          size: "small",
         },
       }
     );
@@ -281,7 +282,11 @@ export const catsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchCats.fulfilled, (state, action: PayloadAction<Cat[]>) => {
-        console.log("Saving to Redux. Payload:", action.payload.length, "items");
+        console.log(
+          "Saving to Redux. Payload:",
+          action.payload.length,
+          "items"
+        );
         state.status = "succeeded";
         state.cats = action.payload.map((cat) => ({
           ...cat,
@@ -292,7 +297,7 @@ export const catsSlice = createSlice({
         const saveData = {
           cats: action.payload,
           status: "succeeded",
-          showFavorites: state.showFavorites
+          showFavorites: state.showFavorites,
         };
         console.log("Saving to localStorage:", saveData);
 
