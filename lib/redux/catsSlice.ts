@@ -88,17 +88,14 @@ export const fetchCats = createAsyncThunk<
 >("cats/fetchCats", async (params, { rejectWithValue }) => {
   try {
     const response = await axios.get<Cat[]>(
-      "https://api.thecatapi.com/v1/images/search",
+      "https://api.thecatapi.com/v1/breeds",
       {
         headers: {
           "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY || "",
         },
         params: {
           limit: 20,
-          has_breeds: 1,
-          breed_id: "all",
-          size: "small",
-          order: "RANDOM",
+          attach_breed: 1,
         },
       }
     );
