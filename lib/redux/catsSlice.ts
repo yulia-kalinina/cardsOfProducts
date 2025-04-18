@@ -5,23 +5,35 @@ import { notFound } from "next/navigation";
 export interface CatBreed {
   id: string;
   name: string;
+  description: string;
+  temperament: string;
+  origin: string;
+  life_span: string;
   weight: {
     imperial: string;
     metric: string;
   };
-  life_span: string;
-  temperament: string;
-  description: string;
-  origin: string;
+  reference_image_id?: string;
+}
+
+export interface CatImage {
+  id: string;
+  url: string;
+  width: number;
+  height: number;
+  breeds?: CatBreed[];
 }
 
 export interface Cat {
   id: string;
   url: string;
-  breeds?: CatBreed[];
-  width: number;
-  height: number;
+  breeds: CatBreed[];
+  width?: number;
+  height?: number;
+  image?: CatImage;
   isFavorite: boolean;
+  name: string;
+  reference_image_id?: string;
 }
 
 export interface CatsState {
@@ -33,14 +45,8 @@ export interface CatsState {
   showFavorites: boolean;
 }
 
-export interface FetchCatsParams {
-  limit?: number;
-  has_breeds?: number;
-}
-
 const loadState = (): CatsState | undefined => {
   if (typeof window === "undefined") {
-    console.log("Server-side: localStorage unavailable");
     return undefined;
   }
 
@@ -49,21 +55,12 @@ const loadState = (): CatsState | undefined => {
     if (!data) return undefined;
 
     const parsed = JSON.parse(data);
-
-    if (Array.isArray(parsed.cats) && parsed.cats.length === 0) {
-      console.log("Ignoring empty cats array from localStorage");
-      return undefined;
-    }
-
     return {
-      cats: parsed.cats.map((cat: Cat) => ({
-        ...cat,
-        isFavorite: cat.isFavorite || false,
-      })) || [],
-      status: parsed.status || "idle", // Сбрасываем статус
+      cats: Array.isArray(parsed.cats) ? parsed.cats : [],
+      status: parsed.status || "idle",
       error: null,
-      currentPage: 1,
-      itemsPerPage: 3,
+      currentPage: parsed.currentPage || 1,
+      itemsPerPage: parsed.itemsPerPage || 3,
       showFavorites: parsed.showFavorites || false,
     };
   } catch (error) {
@@ -81,45 +78,45 @@ const initialState: CatsState = loadState() || {
   showFavorites: false,
 };
 
-export const fetchCats = createAsyncThunk<
-  Cat[],
-  FetchCatsParams,
-  { rejectValue: string }
->("cats/fetchCats", async (params, { rejectWithValue }) => {
-  try {
-    const response = await axios.get<Cat[]>(
-      "https://api.thecatapi.com/v1/breeds",
-      {
-        headers: {
-          "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY || "",
-        },
-        params: {
-          limit: 20,
-          attach_breed: 1,
-        },
-      }
-    );
+export const fetchCats = createAsyncThunk<Cat[], void, { rejectValue: string }>(
+  "cats/fetchCats",
+  async (_, { rejectWithValue }) => {
+    try {
+      const breedsResponse = await axios.get<CatBreed[]>(
+        "https://api.thecatapi.com/v1/breeds",
+        {
+          params: { limit: 20 },
+          headers: { "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY! },
+        }
+      );
 
-    const validCats = response.data.filter((cat) => {
-      const hasValidBreeds =
-        cat.breeds?.length && cat.breeds[0].name && cat.breeds[0].id;
-      return hasValidBreeds;
-    });
+      const catsWithImages = await Promise.all(
+        breedsResponse.data.map(async (breed) => {
+          const imageResponse = await axios.get<CatImage[]>(
+            `https://api.thecatapi.com/v1/images/search?breed_ids=${breed.id}&limit=1`
+          );
 
-    if (validCats.length === 0) {
-      console.warn("API returned no cats with valid breed info");
-      return [];
+          return {
+            id: breed.id,
+            name: breed.name,
+            breeds: [breed],
+            image: imageResponse.data[0],
+            url: imageResponse.data[0]?.url || "",
+            width: imageResponse.data[0]?.width,
+            height: imageResponse.data[0]?.height,
+            isFavorite: false,
+            reference_image_id: breed.reference_image_id,
+          } as Cat;
+        })
+      );
+
+      return catsWithImages.filter((cat) => cat.image);
+    } catch (error) {
+      console.error("API Error:", error);
+      return rejectWithValue("Failed to fetch cats");
     }
-
-    console.log("Valid cats with breeds:", validCats.length);
-    return validCats.slice(0, 20);
-  } catch (error) {
-    console.error("API error:", error);
-    return rejectWithValue(
-      axios.isAxiosError(error) ? error.message : "Unknown error"
-    );
   }
-});
+);
 
 export const fetchCatById = createAsyncThunk<
   Cat,
@@ -127,15 +124,47 @@ export const fetchCatById = createAsyncThunk<
   { rejectValue: string }
 >("cats/fetchById", async (id, { rejectWithValue }) => {
   try {
-    const response = await axios.get<Cat>(
-      `https://api.thecatapi.com/v1/images/${id}`
+    const breedResponse = await axios.get<CatBreed>(
+      `https://api.thecatapi.com/v1/breeds/${id}`,
+      {
+        headers: {
+          "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY || "",
+        },
+      }
     );
-    if (response.status === 404) {
-      return notFound();
+
+    const imageId = breedResponse.data.reference_image_id;
+    if (!imageId) {
+      throw new Error("No reference image available for this breed");
     }
-    return response.data;
+
+    const imageResponse = await axios.get<CatImage>(
+      `https://api.thecatapi.com/v1/images/${imageId}`,
+      {
+        headers: {
+          "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY || "",
+        },
+      }
+    );
+
+    const cat: Cat = {
+      id: breedResponse.data.id,
+      name: breedResponse.data.name,
+      breeds: [breedResponse.data],
+      image: imageResponse.data,
+      url: imageResponse.data.url,
+      width: imageResponse.data.width,
+      height: imageResponse.data.height,
+      isFavorite: false,
+      reference_image_id: imageId,
+    };
+
+    return cat;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        notFound();
+      }
       return rejectWithValue(error.message);
     }
     return rejectWithValue("Unknown error");
@@ -182,7 +211,7 @@ export const catsSlice = createSlice({
 
       return newState;
     },
-    addCat: (state, action: PayloadAction<Cat>) => {
+    addCat: (state, action: PayloadAction<Omit<Cat, "isFavorite">>) => {
       const newCat: Cat = {
         ...action.payload,
         isFavorite: false,
@@ -200,10 +229,12 @@ export const catsSlice = createSlice({
         })
       );
     },
-    toggleFavorite: (state, action: PayloadAction<string>) => {
-      const cat = state.cats.find((cat) => cat.id === action.payload);
-      if (cat) {
-        cat.isFavorite = !cat.isFavorite;
+    toggleFavorite: (state, action) => {
+      const index = state.cats.findIndex((c) => c.id === action.payload);
+      if (index >= 0) {
+        state.cats = state.cats.map((cat, i) =>
+          i === index ? { ...cat, isFavorite: !cat.isFavorite } : cat
+        );
 
         localStorage.setItem(
           "catsState",
@@ -232,16 +263,10 @@ export const catsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchCats.pending, (state) => {
-        console.log("Fetching cats...");
         state.status = "loading";
         state.error = null;
       })
       .addCase(fetchCats.fulfilled, (state, action: PayloadAction<Cat[]>) => {
-        console.log(
-          "Saving to Redux. Payload:",
-          action.payload.length,
-          "items"
-        );
         state.status = "succeeded";
         state.cats = action.payload.map((cat) => ({
           ...cat,
@@ -249,19 +274,29 @@ export const catsSlice = createSlice({
             state.cats.find((c) => c.id === cat.id)?.isFavorite || false,
         }));
 
-        const saveData = {
-          cats: action.payload,
-          status: "succeeded",
-          showFavorites: state.showFavorites,
-        };
-        console.log("Saving to localStorage:", saveData);
-
-        localStorage.setItem("catsState", JSON.stringify(saveData));
+        localStorage.setItem(
+          "catsState",
+          JSON.stringify({
+            cats: state.cats,
+            status: "succeeded",
+            showFavorites: state.showFavorites,
+          })
+        );
       })
       .addCase(fetchCats.rejected, (state, action) => {
-        console.error("Fetch failed:", action.payload);
         state.status = "failed";
-        state.error = action.payload || "Failed to fecth breeds";
+        state.error = action.payload || "Failed to fetch cats";
+      })
+      .addCase(fetchCatById.fulfilled, (state, action: PayloadAction<Cat>) => {
+        const existingIndex = state.cats.findIndex(
+          (c) => c.id === action.payload.id
+        );
+        if (existingIndex >= 0) {
+          state.cats[existingIndex] = action.payload;
+        } else {
+          state.cats.push(action.payload);
+        }
+        localStorage.setItem("catsState", JSON.stringify(state));
       });
   },
 });

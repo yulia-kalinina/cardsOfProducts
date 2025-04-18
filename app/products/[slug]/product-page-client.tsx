@@ -9,8 +9,8 @@ import { UiButton } from "@/components/uikit/ui-button";
 import { useAppDispatch } from "@/lib/redux/hooks";
 
 interface ProductPageClientProps {
-    slug: string;
-  };
+  slug: string;
+}
 
 export default function ProductPageClient({ slug }: ProductPageClientProps) {
   const router = useRouter();
@@ -79,8 +79,6 @@ export default function ProductPageClient({ slug }: ProductPageClientProps) {
     );
   }
 
-  if (!cat?.breeds) return <div className="max-w-[1200px] mx-auto px-[15px] pt-12 text-base">There is no info about breeds</div>;
-
   const breed = cat.breeds?.[0];
 
   return (
@@ -99,38 +97,44 @@ export default function ProductPageClient({ slug }: ProductPageClientProps) {
             priority={true}
           />
         </div>
-        <div className="flex-1">
-          <div className="mb-2">
-            <span className="font-semibold mr-1">Weight (metric):</span>
-            {breed?.weight?.metric || "Not specified"} kg
-          </div>
-          <div className="mb-2">
-            <span className="font-semibold mr-1">Weight (imperial):</span>
-            {breed?.weight?.imperial || "Not specified"} kg
-          </div>
-          <div className="mb-2">
-            <span className="font-semibold mr-1">Life Span:</span>
-            {breed?.life_span || "Not specified"}
-          </div>
-          <div className="mb-2">
-            <span className="font-semibold mr-1">Temperament:</span>
-            {breed?.temperament || "Not specified"}
-          </div>
-          <div className="mb-2">
-            <span className="font-semibold mr-1">Origin:</span>
-            {breed?.origin || "Not specified"}
-          </div>
-          <div className="mb-8">
-            <span className="font-semibold mr-1">Description:</span>
-            {breed?.description || "Not specified"}
-          </div>
 
-          <div className="text-sm flex items-center justify-end gap-4">
-            <Link href="/products">
-              <UiButton variant="primary" className="px-4 py-2 rounded-md">
-                Back to products
-              </UiButton>
-            </Link>
+        <div className="flex-1 mb-4">
+          <div className="flex flex-col min-h-[300px]">
+            <div className="flex-grow">
+              <div className="mb-2">
+                <span className="font-semibold mr-1">Weight (metric):</span>
+                {breed?.weight?.metric || "Not specified"} kg
+              </div>
+              <div className="mb-2">
+                <span className="font-semibold mr-1">Weight (imperial):</span>
+                {breed?.weight?.imperial || "Not specified"} kg
+              </div>
+              <div className="mb-2">
+                <span className="font-semibold mr-1">Life Span:</span>
+                {breed?.life_span || "Not specified"}
+              </div>
+              <div className="mb-2">
+                <span className="font-semibold mr-1">Temperament:</span>
+                {breed?.temperament || "Not specified"}
+              </div>
+              <div className="mb-2">
+                <span className="font-semibold mr-1">Origin:</span>
+                {breed?.origin || "Not specified"}
+              </div>
+              <div className="mb-8">
+                <span className="font-semibold mr-1">Description:</span>
+                {breed?.description || "Not specified"}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm flex items-center justify-end">
+                <Link href="/products">
+                  <UiButton variant="primary" className="px-4 py-2 rounded-md">
+                    Back to products
+                  </UiButton>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>

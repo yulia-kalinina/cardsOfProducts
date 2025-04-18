@@ -1,26 +1,26 @@
-import { Cat } from "@/lib/redux/catsSlice";
+import { CatBreed } from "@/lib/redux/catsSlice";
 import ProductPageClient from "./product-page-client";
 import { Metadata } from "next";
 
 type Props = Promise<{ slug: string }>;
 
 export async function generateStaticParams() {
-  const response = await fetch(
-    "https://api.thecatapi.com/v1/images/search?limit=20&has_breeds=1",
-    {
+  try {
+    const breedsResponse = await fetch("https://api.thecatapi.com/v1/breeds", {
       headers: {
         "x-api-key": process.env.NEXT_PUBLIC_CAT_API_KEY || "",
       },
-    }
-  );
+    });
+    const breeds: CatBreed[] = await breedsResponse.json();
+    console.log(breeds);
 
-  const cats: Cat[] = await response.json();
-  return cats.map(cat => ({ slug: cat.id }));
-
-  //const catsWithBreeds = cats.filter((cat) => cat.breeds?.length);
-  //return catsWithBreeds.length > 0
-  //  ? catsWithBreeds.map((cat) => ({ slug: cat.id }))
-  //  : [{ slug: "default-cat" }];
+    return breeds.map((breed) => {
+      return { slug: breed.id };
+    });
+  } catch (error) {
+    console.log("Error in generateStaticParams:", error);
+    return [];
+  }
 }
 
 export async function generateMetadata(props: {

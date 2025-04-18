@@ -14,8 +14,9 @@ interface CatCardProps {
 }
 
 export function CatCard({ cat }: CatCardProps) {
-  console.log("show current cat info in card component:", cat);
   const dispatch = useAppDispatch();
+
+  const imageUrl = cat.image?.url;
 
   const breed = cat.breeds?.[0];
 
@@ -41,7 +42,7 @@ export function CatCard({ cat }: CatCardProps) {
       <div className="bg-white h-[600px] rounded-lg shadow-md overflow-hidden grid grid-rows-[auto_1fr_auto]">
         <div className="relative h-64 w-full overflow-hiddenn">
           <Image
-            src={cat.url}
+            src={imageUrl || ""}
             alt={breed?.name || "Cat"}
             fill
             className="object-cover object-left-top bg-sky-200"
@@ -89,7 +90,7 @@ export function CatCard({ cat }: CatCardProps) {
             onClick={handleLikeClick}
             className={clsx(
               cat.isFavorite ? "text-blue-600" : "text-slate-600",
-              "hover:cursor-pointer transition-colors"
+              "hover:cursor-pointer transition-colors duration-200"
             )}
           >
             <LikeIcon />

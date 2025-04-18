@@ -10,80 +10,41 @@ import { UiButton } from "@/components/uikit/ui-button";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-interface FormCat {
-  breeds: [
-    {
-      name: string;
-      weight: { imperial: string; metric: string };
-      life_span: string;
-      temperament: string;
-      description: string;
-      origin: string;
-    }
-  ];
-  width: number;
-  height: number;
-}
-
 export default function AddCatForm() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<FormCat>({
-    breeds: [
-      {
-        name: "",
-        weight: { imperial: "", metric: "" },
-        life_span: "",
-        temperament: "",
-        description: "",
-        origin: "",
-      },
-    ],
-    width: 0,
-    height: 0,
+  const [formData, setFormData] = useState({
+    name: "",
+    weight: { imperial: "", metric: "" },
+    lifeSpan: "",
+    temperament: "",
+    description: "",
+    origin: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-
-    if (name.includes("breeds[0].")) {
-      const fieldName = name.replace("breeds[0].", "");
-      if (fieldName.includes("weight.")) {
-        const weightField = fieldName.replace("weight.", "");
-        setFormData((prev) => ({
-          ...prev,
-          breeds: [
-            {
-              ...prev.breeds[0],
-              weight: {
-                ...prev.breeds[0].weight,
-                [weightField]: value,
-              },
-            },
-          ],
-        }));
-      } else {
-        setFormData((prev) => ({
-          ...prev,
-          breeds: [
-            {
-              ...prev.breeds[0],
-              [fieldName]: value,
-            },
-          ],
-        }));
-      }
+    
+    if (name.startsWith("weight.")) {
+      const weightField = name.split(".")[1];
+      setFormData(prev => ({
+        ...prev,
+        weight: {
+          ...prev.weight,
+          [weightField]: value
+        }
+      }));
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
+    
+    setErrors(prev => ({ ...prev, [name.split(".")[0]]: "" }));
   };
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -120,31 +81,31 @@ export default function AddCatForm() {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.breeds[0].name.trim()) {
+    if (!formData.name.trim()) {
       newErrors.name = "Breed name is required";
     }
 
-    if (!formData.breeds[0].weight.imperial.trim()) {
+    if (!formData.weight.imperial.trim()) {
       newErrors.weightImperial = "Weight (imperial) is required";
     }
 
-    if (!formData.breeds[0].weight.metric.trim()) {
-      newErrors.weightImperial = "Weight (metric) is required";
+    if (!formData.weight.metric.trim()) {
+      newErrors.weightMetric = "Weight (metric) is required";
     }
 
-    if (!formData.breeds[0].life_span.trim()) {
-      newErrors.weightImperial = "Life span is required";
+    if (!formData.lifeSpan.trim()) {
+      newErrors.lifeSpan = "Life span is required";
     }
 
-    if (!formData.breeds[0].temperament.trim()) {
+    if (!formData.temperament.trim()) {
       newErrors.temperament = "Temperament is required";
     }
 
-    if (!formData.breeds[0].origin.trim()) {
+    if (!formData.origin.trim()) {
       newErrors.origin = "Origin is required";
     }
 
-    if (!formData.breeds[0].description.trim()) {
+    if (!formData.description.trim()) {
       newErrors.description = "Description is required";
     }
 
@@ -159,32 +120,46 @@ export default function AddCatForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validate()) return;
 
     setIsSubmitting(true);
 
     try {
-      const mockImageUrl = previewImage || "";
-
       const newCat: Cat = {
         id: Math.random().toString(36).substring(2, 9),
-        url: mockImageUrl,
+        name: formData.name,
+        url: previewImage || "",
         width: 500,
         height: 500,
         isFavorite: false,
         breeds: [
           {
             id: Math.random().toString(36).substring(2, 9),
-            ...formData.breeds[0],
+            name: formData.name,
+            weight: {
+              imperial: formData.weight.imperial,
+              metric: formData.weight.metric,
+            },
+            life_span: formData.lifeSpan,
+            temperament: formData.temperament,
+            description: formData.description,
+            origin: formData.origin,
+            reference_image_id: Math.random().toString(36).substring(2, 9),
           },
         ],
+        image: {
+          id: Math.random().toString(36).substring(2, 9),
+          url: previewImage || "",
+          width: 500,
+          height: 500,
+        },
+        reference_image_id: Math.random().toString(36).substring(2, 9),
       };
 
       dispatch(addCat(newCat));
       router.push("/products");
     } catch (error) {
-      alert(error);
+      console.error("Error adding cat:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -234,16 +209,16 @@ export default function AddCatForm() {
 
           <div>
             <label
-              htmlFor="breeds[0].name"
+              htmlFor="name"
               className="block text-sm font-medium text-gray-700"
             >
-              Breed Name <span className="text-red-700">*</span>
+              Breed name <span className="text-red-700">*</span>
             </label>
             <input
               type="text"
-              id="breeds[0].name"
-              name="breeds[0].name"
-              value={formData.breeds[0].name}
+              id="name"
+              name="name"
+              value={formData.name}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500
               focus:ring-indigo-500 p-2 border"
@@ -257,16 +232,16 @@ export default function AddCatForm() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label
-                htmlFor="breeds[0].weight.imperial"
+                htmlFor="weight.imperial"
                 className="block text-sm font-medium text-gray-700"
               >
                 Weight (Imperial) <span className="text-red-700">*</span>
               </label>
               <input
                 type="text"
-                id="breeds[0].weight.imperial"
-                name="breeds[0].weight.imperial"
-                value={formData.breeds[0].weight.imperial}
+                id="weight.imperial"
+                name="weight.imperial"
+                value={formData.weight.imperial}
                 onChange={handleChange}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500
                 focus:ring-indigo-500 p-2 border"
@@ -278,18 +253,19 @@ export default function AddCatForm() {
                 </p>
               )}
             </div>
+
             <div>
               <label
-                htmlFor="breeds[0].weight.metric"
+                htmlFor="weight.metric"
                 className="block text-sm font-medium text-gray-700"
               >
                 Weight (Metric) <span className="text-red-700">*</span>
               </label>
               <input
                 type="text"
-                id="breeds[0].weight.metric"
-                name="breeds[0].weight.metric"
-                value={formData.breeds[0].weight.metric}
+                id="weight.metric"
+                name="weight.metric"
+                value={formData.weight.metric}
                 onChange={handleChange}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
                 required
@@ -304,38 +280,38 @@ export default function AddCatForm() {
 
           <div>
             <label
-              htmlFor="breeds[0].life_span"
+              htmlFor="lifeSpan"
               className="block text-sm font-medium text-gray-700"
             >
               Life Span <span className="text-red-700">*</span>
             </label>
             <input
               type="text"
-              id="breeds[0].life_span"
-              name="breeds[0].life_span"
-              value={formData.breeds[0].life_span}
+              id="lifeSpan"
+              name="lifeSpan"
+              value={formData.lifeSpan}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500
               focus:ring-indigo-500 p-2 border"
               required
             />
-            {errors.life_span && (
-              <p className="mt-1 text-sm text-red-600">{errors.life_span}</p>
+            {errors.lifeSpan && (
+              <p className="mt-1 text-sm text-red-600">{errors.lifeSpan}</p>
             )}
           </div>
 
           <div>
             <label
-              htmlFor="breeds[0].temperament"
+              htmlFor="temperament"
               className="block text-sm font-medium text-gray-700"
             >
               Temperament <span className="text-red-700">*</span>
             </label>
             <input
               type="text"
-              id="breeds[0].temperament"
-              name="breeds[0].temperament"
-              value={formData.breeds[0].temperament}
+              id="temperament"
+              name="temperament"
+              value={formData.temperament}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500
               focus:ring-indigo-500 p-2 border"
@@ -348,16 +324,16 @@ export default function AddCatForm() {
 
           <div>
             <label
-              htmlFor="breeds[0].origin"
+              htmlFor="origin"
               className="block text-sm font-medium text-gray-700"
             >
               Origin <span className="text-red-700">*</span>
             </label>
             <input
               type="text"
-              id="breeds[0].origin"
-              name="breeds[0].origin"
-              value={formData.breeds[0].origin}
+              id="origin"
+              name="origin"
+              value={formData.origin}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 
               focus:ring-indigo-500 p-2 border"
@@ -370,15 +346,15 @@ export default function AddCatForm() {
 
           <div>
             <label
-              htmlFor="breeds[0].description"
+              htmlFor="description"
               className="block text-sm font-medium text-gray-700"
             >
               Description <span className="text-red-700">*</span>
             </label>
             <textarea
-              id="breeds[0].description"
-              name="breeds[0].description"
-              value={formData.breeds[0].description}
+              id="description"
+              name="description"
+              value={formData.description}
               onChange={handleChange}
               rows={4}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 
@@ -395,7 +371,7 @@ export default function AddCatForm() {
               variant="outline"
               type="button"
               className="px-4 py-2 rounded-md"
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/products")}
             >
               Cancel
             </UiButton>
